@@ -1,0 +1,260 @@
+/* ==============================
+   # RESET & BASE STYLES
+   ============================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* ==============================
+   # HEADER
+   ============================== */
+header {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+header h1 {
+    font-size: 28px;
+    color: #1f2937;
+    margin-bottom: 20px;
+}
+
+.balance {
+    text-align: center;
+}
+
+.balance .label {
+    display: block;
+    color: #6b7280;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.balance .amount {
+    font-size: 36px;
+    font-weight: bold;
+    color: #4f46e5;
+}
+
+/* ==============================
+   # TABS
+   ============================== */
+.tabs {
+    display: flex;
+    background: white;
+    border-radius: 15px;
+    padding: 8px;
+    margin-bottom: 20px;
+    gap: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #6b7280;
+    transition: all 0.3s;
+}
+
+.tab-btn.active {
+    background: #4f46e5;
+    color: white;
+}
+
+/* ==============================
+   # TAB CONTENT
+   ============================== */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* ==============================
+   # SUMMARY
+   ============================== */
+.summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.summary-item {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.summary-item .label {
+    display: block;
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+
+.summary-item .amount {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.summary-item.income .amount {
+    color: #10b981;
+}
+
+.summary-item.expense .amount {
+    color: #ef4444;
+}
+
+/* ==============================
+   # TRANSACTION LIST
+   ============================== */
+.transaction-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.transaction-item {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+.transaction-info {
+    flex: 1;
+}
+
+.transaction-desc {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 5px;
+}
+
+.transaction-date {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.transaction-amount {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.transaction-amount.income {
+    color: #10b981;
+}
+
+.transaction-amount.expense {
+    color: #ef4444;
+}
+
+/* ==============================
+   # FORM
+   ============================== */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #374151;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #4f46e5;
+}
+
+button[type="submit"] {
+    width: 100%;
+    padding: 16px;
+    background: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button[type="submit"]:hover {
+    background: #4338ca;
+}
+
+/* ==============================
+   # REPORT ACTIONS
+   ============================== */
+.report-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.report-actions button,
+.file-input-label {
+    padding: 16px;
+    background: white;
+    color: #4f46e5;
+    border: 2px solid #4f46e5;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+    display: block;
+}
+
+.report-actions button:hover,
+.file-input-label:hover {
+    background: #4f46e5;
+    color: white;
+}
+
+.file-input-label input {
+    display: none;
+}

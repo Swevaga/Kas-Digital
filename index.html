@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4f46e5">
+    <title>Kas Digital - Pencatat Uang</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Kas Digital</h1>
+            <div class="balance">
+                <span class="label">Saldo</span>
+                <span class="amount" id="balance">Rp 0</span>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="transactions">Transaksi</button>
+            <button class="tab-btn" data-tab="add">Tambah</button>
+            <button class="tab-btn" data-tab="report">Laporan</button>
+        </nav>
+
+        <main>
+            <section id="transactions-tab" class="tab-content active">
+                <div class="summary">
+                    <div class="summary-item income">
+                        <span class="label">Pemasukan</span>
+                        <span class="amount" id="total-income">Rp 0</span>
+                    </div>
+                    <div class="summary-item expense">
+                        <span class="label">Pengeluaran</span>
+                        <span class="amount" id="total-expense">Rp 0</span>
+                    </div>
+                </div>
+                <div class="transaction-list" id="transaction-list"></div>
+            </section>
+
+            <section id="add-tab" class="tab-content">
+                <form id="transaction-form">
+                    <div class="form-group">
+                        <label for="type">Tipe</label>
+                        <select id="type">
+                            <option value="income">Pemasukan</option>
+                            <option value="expense">Pengeluaran</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Keterangan</label>
+                        <input type="text" id="description" required placeholder="Masukkan keterangan">
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Jumlah (Rp)</label>
+                        <input type="number" id="amount" required placeholder="Masukkan jumlah" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="date">Tanggal</label>
+                        <input type="date" id="date" required>
+                    </div>
+                    <button type="submit">Simpan Transaksi</button>
+                </form>
+            </section>
+
+            <section id="report-tab" class="tab-content">
+                <div class="report-actions">
+                    <button id="export-pdf">Ekspor ke PDF</button>
+                    <button id="export-json">Export Data JSON</button>
+                    <label class="file-input-label">
+                        <input type="file" id="import-json" accept=".json">
+                        Import Data JSON
+                    </label>
+                    <button id="backup-drive">Cadangkan ke Google Drive</button>
+                    <button id="backup-github">Sinkron ke GitHub</button>
+                </div>
+                
+                <div class="config-section" style="margin-top:30px; background:white; border-radius:15px; padding:20px;">
+                    <h3 style="margin-bottom:15px; color:#1f2937;">Konfigurasi Sinkronisasi</h3>
+                    <div class="form-group">
+                        <label for="github-pat">GitHub Personal Access Token</label>
+                        <input type="password" id="github-pat" placeholder="Masukkan GitHub PAT">
+                    </div>
+                    <div class="form-group">
+                        <label for="github-repo">GitHub Repository (username/repo)</label>
+                        <input type="text" id="github-repo" placeholder="contoh: user/kas-digital">
+                    </div>
+                    <button id="save-config">Simpan Konfigurasi</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf.umd.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
