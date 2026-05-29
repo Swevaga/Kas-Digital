@@ -25,6 +25,36 @@ body {
     background: var(--gray-100);
     min-height: 100vh;
     color: var(--gray-900);
+    overflow: hidden;
+}
+
+.screen {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ==============================
+   # LOGO
+   ============================== */
+.logo-container {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 24px;
+}
+
+.app-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.spinning {
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 /* ==============================
@@ -48,20 +78,6 @@ body {
     color: white;
 }
 
-.spinner {
-    width: 80px;
-    height: 80px;
-    border: 8px solid rgba(255, 255, 255, 0.2);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 24px;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
 .splash-title {
     font-size: 32px;
     font-weight: bold;
@@ -71,16 +87,120 @@ body {
 .splash-subtitle {
     font-size: 16px;
     opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.splash-version {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* ==============================
+   # ONBOARDING SCREEN
+   ============================== */
+.onboarding-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    z-index: 9998;
+}
+
+.onboarding-content {
+    width: 100%;
+    max-width: 400px;
+    background: white;
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.onboarding-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--gray-900);
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.onboarding-subtitle {
+    font-size: 16px;
+    color: var(--gray-500);
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.onboarding-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ==============================
+   # UPDATE NOTIFICATION
+   ============================== */
+.update-notification {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 9997;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.update-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    justify-content: space-between;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.update-text {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.update-btn {
+    background: white;
+    color: var(--primary);
+    border: none;
+    padding: 8px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.update-btn:hover {
+    transform: scale(1.05);
 }
 
 /* ==============================
    # MAIN APP
    ============================== */
 .main-app {
-    max-width: 500px;
+    max-width: 600px;
     margin: 0 auto;
     min-height: 100vh;
     background: var(--gray-100);
+    display: flex;
+    flex-direction: column;
+    position: relative;
 }
 
 /* ==============================
@@ -91,6 +211,7 @@ body {
     padding: 16px 20px 32px;
     border-bottom-left-radius: 24px;
     border-bottom-right-radius: 24px;
+    flex-shrink: 0;
 }
 
 .header-top {
@@ -100,10 +221,43 @@ body {
     margin-bottom: 24px;
 }
 
-.app-name {
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.profile-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
     color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 20px;
-    font-weight: 700;
+    font-weight: bold;
+}
+
+.profile-text {
+    color: white;
+}
+
+.profile-greeting {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-bottom: 2px;
+}
+
+.profile-name {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
 }
 
 .btn-icon {
@@ -187,6 +341,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+    flex-shrink: 0;
 }
 
 .action-btn {
@@ -199,7 +354,7 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -234,42 +389,17 @@ body {
 }
 
 /* ==============================
-   # TABS
+   # APP CONTENT
    ============================== */
-.tabs-container {
-    padding: 0 20px;
-    display: flex;
-    background: white;
-    margin: 0 20px;
-    border-radius: 16px;
-    padding: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.tab-btn {
+.app-content {
     flex: 1;
-    padding: 12px;
-    border: none;
-    background: transparent;
-    border-radius: 12px;
-    cursor: pointer;
-    font-weight: 600;
-    color: var(--gray-500);
-    transition: all 0.2s;
-    font-size: 14px;
+    overflow-y: auto;
+    padding: 0 20px 100px 20px;
 }
 
-.tab-btn.active {
-    background: var(--primary);
-    color: white;
-}
-
-/* ==============================
-   # TAB CONTENT
-   ============================== */
 .tab-content {
     display: none;
-    padding: 20px;
+    padding-top: 20px;
 }
 
 .tab-content.active {
@@ -292,7 +422,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     cursor: pointer;
     transition: transform 0.15s;
 }
@@ -390,6 +520,67 @@ body {
 }
 
 /* ==============================
+   # BOTTOM NAVIGATION
+   ============================== */
+.bottom-nav {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 40px);
+    max-width: 520px;
+    background: white;
+    border-radius: 20px;
+    padding: 8px;
+    display: flex;
+    justify-content: space-around;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    z-index: 100;
+    animation: floatUp 0.5s ease-out;
+}
+
+@keyframes floatUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 8px;
+    background: transparent;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    color: var(--gray-500);
+    transition: all 0.2s;
+}
+
+.nav-item.active {
+    background: var(--primary);
+    color: white;
+}
+
+.nav-item svg {
+    width: 24px;
+    height: 24px;
+}
+
+.nav-item span {
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* ==============================
    # MODAL
    ============================== */
 .modal {
@@ -403,12 +594,13 @@ body {
     justify-content: center;
     align-items: flex-end;
     z-index: 1000;
+    padding: 0;
 }
 
 .modal-content {
     background: white;
     width: 100%;
-    max-width: 500px;
+    max-width: 600px;
     border-top-left-radius: 24px;
     border-top-right-radius: 24px;
     padding: 24px;
@@ -476,6 +668,7 @@ body {
     font-weight: 600;
     transition: all 0.2s;
     color: var(--gray-700);
+    margin: 0;
 }
 
 .type-switch input:checked + label {
@@ -512,4 +705,107 @@ body {
 
 .btn-primary:hover {
     background: var(--primary-dark);
+}
+
+/* ==============================
+   # SETTINGS CONTENT
+   ============================== */
+.settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.settings-section h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 16px;
+}
+
+.guide-box {
+    background: var(--gray-100);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.guide-box h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--gray-900);
+}
+
+.guide-box ol {
+    margin-left: 20px;
+    color: var(--gray-700);
+    font-size: 13px;
+}
+
+.guide-box li {
+    margin-bottom: 4px;
+}
+
+.guide-box a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.help-text {
+    font-size: 13px;
+    color: var(--gray-500);
+    line-height: 1.5;
+}
+
+.version-text {
+    font-size: 13px;
+    color: var(--gray-500);
+    margin-bottom: 12px;
+}
+
+/* ==============================
+   # RESPONSIVE - PC/LAPTOP
+   ============================== */
+@media (min-width: 769px) {
+    .main-app {
+        max-width: 900px;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    
+    .app-content {
+        padding-bottom: 80px;
+    }
+    
+    .bottom-nav {
+        max-width: 840px;
+    }
+    
+    .modal {
+        align-items: center;
+        padding: 24px;
+    }
+    
+    .modal-content {
+        border-radius: 24px;
+    }
+    
+    .onboarding-content {
+        max-width: 500px;
+    }
+}
+
+/* ==============================
+   # FULLSCREEN & MOBILE OPTIMIZATION
+   ============================== */
+@media (max-width: 768px) {
+    .main-app {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    body {
+        overflow: hidden;
+    }
 }

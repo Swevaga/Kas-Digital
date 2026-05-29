@@ -3,6 +3,11 @@
 // ==============================
 let transactions = [];
 let currentTab = 'transactions';
+let userProfile = {
+    name: '',
+    dob: ''
+};
+const APP_VERSION = '0.3.0';
 
 // ==============================
 // # INITIALIZATION
@@ -14,16 +19,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initApp() {
     loadTransactions();
+    loadUserProfile();
+    
+    // Check if we need to show onboarding
+    if (!userProfile.name) {
+        setTimeout(() => {
+            showOnboarding();
+        }, 2000);
+    } else {
+        setTimeout(() => {
+            showMainApp();
+        }, 2000);
+    }
+    
     renderTransactions();
     updateSummary();
     setupEventListeners();
     setCurrentDate();
-    
-    // Show main app after splash screen
-    setTimeout(() => {
-        document.getElementById('splash-screen').style.display = 'none';
-        document.getElementById('main-app').style.display = 'block';
-    }, 2000);
+    checkForUpdates();
+}
+
+function showOnboarding() {
+    document.getElementById('splash-screen').style.display = 'none';
+    document.getElementById('onboarding-screen').style.display = 'flex';
+}
+
+function showMainApp() {
+    document.getElementById('splash-screen').style.display = 'none';
+    document.getElementById('onboarding-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'flex';
+    updateProfileDisplay();
 }
 
 // ==============================
@@ -38,36 +63,104 @@ function registerServiceWorker() {
 }
 
 // ==============================
+// # USER PROFILE
+// ==============================
+function loadUserProfile() {
+    const saved = localStorage.getItem('kas-digital-profile');
+    if (saved) {
+        userProfile = JSON.parse(saved);
+    }
+}
+
+function saveUserProfile() {
+    localStorage.setItem('kas-digital-profile', JSON.stringify(userProfile));
+}
+
+function updateProfileDisplay() {
+    document.getElementById('profile-name').textContent = userProfile.name || 'User';
+    const avatar = document.getElementById('profile-avatar');
+    if (userProfile.name) {
+        avatar.textContent = userProfile.name.charAt(0).toUpperCase();
+    }
+    
+    // Also update settings form
+    document.getElementById('settings-name').value = userProfile.name || '';
+    document.getElementById('settings-dob').value = userProfile.dob || '';
+}
+
+// ==============================
 // # EVENT LISTENERS
 // ==============================
 function setupEventListeners() {
-    // Tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', handleTabChange);
+    // Onboarding form
+    document.getElementById('onboarding-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        userProfile.name = document.getElementById('onboarding-name').value;
+        userProfile.dob = document.getElementById('onboarding-dob').value;
+        saveUserProfile();
+        showMainApp();
+    });
+    
+    // Bottom nav items
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            handleTabChangeBottomNav(e.currentTarget.dataset.tab);
+        });
     });
     
     // Quick actions
     document.getElementById('btn-add-income').addEventListener('click', () => openModal('income'));
     document.getElementById('btn-add-expense').addEventListener('click', () => openModal('expense'));
     
-    // Modal
+    // Modal - add transaction
     document.getElementById('btn-close-modal').addEventListener('click', closeModal);
     document.getElementById('modal-add').addEventListener('click', (e) => {
         if (e.target.id === 'modal-add') closeModal();
     });
-    
-    // Form
     document.getElementById('transaction-form').addEventListener('submit', handleAddTransaction);
+    
+    // Settings modal
+    document.getElementById('btn-settings').addEventListener('click', openSettingsModal);
+    document.getElementById('btn-close-settings').addEventListener('click', closeSettingsModal);
+    document.getElementById('settings-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'settings-modal') closeSettingsModal();
+    });
+    document.getElementById('btn-save-profile').addEventListener('click', saveProfileFromSettings);
+    document.getElementById('btn-check-update').addEventListener('click', checkForUpdates);
+    document.getElementById('btn-drive-sync-settings').addEventListener('click', syncToDrive);
     
     // Report buttons
     document.getElementById('btn-export-pdf').addEventListener('click', exportToPDF);
     document.getElementById('btn-export-excel').addEventListener('click', exportToExcel);
     document.getElementById('btn-export-json').addEventListener('click', exportToJSON);
     document.getElementById('import-json').addEventListener('change', importFromJSON);
-    
-    // Google Drive sync
     document.getElementById('btn-drive-sync').addEventListener('click', syncToDrive);
-    document.getElementById('btn-drive-sync2').addEventListener('click', syncToDrive);
+    
+    // Update notification
+    document.getElementById('update-btn').addEventListener('click', () => {
+        window.location.reload();
+    });
+}
+
+// ==============================
+// # TAB HANDLING (Bottom Nav)
+// ==============================
+function handleTabChangeBottomNav(tab) {
+    currentTab = tab;
+    
+    // Update bottom nav
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.tab === tab) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Update content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    document.getElementById(`${tab}-tab`).classList.add('active');
 }
 
 // ==============================
@@ -96,6 +189,26 @@ function closeModal() {
     modal.style.display = 'none';
     document.getElementById('transaction-form').reset();
     setCurrentDate();
+}
+
+function openSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    document.getElementById('settings-name').value = userProfile.name || '';
+    document.getElementById('settings-dob').value = userProfile.dob || '';
+    modal.style.display = 'flex';
+}
+
+function closeSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    modal.style.display = 'none';
+}
+
+function saveProfileFromSettings() {
+    userProfile.name = document.getElementById('settings-name').value;
+    userProfile.dob = document.getElementById('settings-dob').value;
+    saveUserProfile();
+    updateProfileDisplay();
+    closeSettingsModal();
 }
 
 // ==============================
@@ -135,16 +248,6 @@ function deleteTransaction(id) {
         renderTransactions();
         updateSummary();
     }
-}
-
-function handleTabChange(e) {
-    currentTab = e.target.dataset.tab;
-    
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    e.target.classList.add('active');
-    
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    document.getElementById(`${currentTab}-tab`).classList.add('active');
 }
 
 function setCurrentDate() {
@@ -220,7 +323,7 @@ function renderSpreadsheet() {
         </tr>
         <tr>
             <td colspan="3" style="padding: 12px 16px;">Saldo Akhir</td>
-            <td style="padding: 12px 16px; color: #008A4B;">${formatCurrency(balance)}</td>
+            <td style="padding: 12px 16px; color: #008a4b;">${formatCurrency(balance)}</td>
             <td></td>
         </tr>
     `;
@@ -423,12 +526,27 @@ function exportToPDF() {
 }
 
 // ==============================
-// # SYNC FUNCTIONS
+// # UPDATE & SYNC
 // ==============================
+function checkForUpdates() {
+    // Simulate checking for updates
+    const lastUpdateCheck = localStorage.getItem('kas-digital-last-update-check');
+    const now = Date.now();
+    
+    if (!lastUpdateCheck || (now - lastUpdateCheck > 86400000)) {
+        localStorage.setItem('kas-digital-last-update-check', String(now));
+        // In a real app, you'd check a server here
+    }
+}
+
+function showUpdateNotification() {
+    document.getElementById('update-notification').style.display = 'flex';
+}
+
 function syncToDrive() {
-    alert('Fitur sinkronisasi Google Drive sedang dalam pengembangan!\n\nUntuk saat ini, gunakan fitur Export JSON untuk mencadangkan data Anda.');
+    alert('Untuk menyinkronkan dengan Google Drive:\n\n1. Buka Google Cloud Console\n2. Buat project baru\n3. Aktifkan Google Drive API\n4. Buat OAuth 2.0 Client ID\n5. Tambahkan origin ke Authorized JavaScript origins\n\nData Anda disimpan secara lokal. Gunakan Export JSON untuk mencadangkan!');
 }
 
 function syncToGitHub() {
-    alert('Konfigurasi GitHub sudah diatur di GitHub Actions!\n\nData Anda disimpan secara lokal di perangkat. Untuk mencadangkan, gunakan fitur Export JSON.');
+    alert('Konfigurasi GitHub sudah diatur di GitHub Actions! Push kode Anda untuk deployment otomatis!');
 }
