@@ -6,12 +6,14 @@
     <meta name="theme-color" content="#008A4B">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Kas Digital by Evaga (Rouf) - v0.3 Beta</title>
+    <title>Kas Digital by Evaga (Rouf) - v0.4</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js"></script>
 </head>
 <body>
     <!-- ==============================
@@ -24,6 +26,14 @@
             </div>
             <h1 class="onboarding-title">Selamat Datang!</h1>
             <p class="onboarding-subtitle">Silakan lengkapi data diri Anda</p>
+            <div id="g_id_onload"
+                 data-client_id="574453077911-l774e595s4dcpa7652fqgtd7au6jrpu7.apps.googleusercontent.com"
+                 data-context="signin"
+                 data-ux_mode="popup"
+                 data-callback="handleGoogleSignIn"
+                 data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin" data-type="standard" data-theme="filled_blue" data-text="signin_with" data-size="large"></div>
             <form id="onboarding-form" class="onboarding-form">
                 <div class="form-group">
                     <label for="onboarding-name">Nama Lengkap</label>
@@ -39,16 +49,17 @@
     </div>
 
     <!-- ==============================
-         # SPLASH SCREEN
+         # SPLASH SCREEN (Windows 11 Style)
          ============================== -->
     <div id="splash-screen" class="screen splash-screen">
         <div class="splash-content">
             <div class="logo-container">
-                <img src="https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=money%20coin%20logo%20inside%20circle%20green%20color%20minimal%20flat%20design&image_size=square_hd" alt="Kas Digital Logo" class="app-logo spinning">
+                <img src="https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=money%20coin%20logo%20inside%20circle%20green%20color%20minimal%20flat%20design&image_size=square_hd" alt="Kas Digital Logo" class="app-logo">
             </div>
-            <h1 class="splash-title">Kas Digital</h1>
-            <p class="splash-subtitle">by Evaga (Rouf)</p>
-            <p class="splash-version">v0.3 Beta</p>
+            <div class="win11-loader">
+                <div class="win11-spinner"></div>
+            </div>
+            <p class="splash-text">Loading...</p>
         </div>
     </div>
 
@@ -57,7 +68,10 @@
          ============================== -->
     <div id="update-notification" class="update-notification" style="display: none;">
         <div class="update-content">
-            <p class="update-text">🎉 Update tersedia! Klik untuk memperbarui</p>
+            <div class="update-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <p class="update-text">Update tersedia! Klik untuk memperbarui aplikasi</p>
             <button id="update-btn" class="update-btn">Perbarui</button>
         </div>
     </div>
@@ -70,6 +84,7 @@
         <header class="app-header">
             <div class="header-top">
                 <div class="profile-info" id="profile-info">
+                    <img id="profile-avatar-img" src="" alt="Profile" class="profile-avatar-img" style="display: none;">
                     <div class="profile-avatar" id="profile-avatar">U</div>
                     <div class="profile-text">
                         <p class="profile-greeting">Halo,</p>
@@ -77,6 +92,9 @@
                     </div>
                 </div>
                 <div class="header-actions">
+                    <button id="btn-sync-drive" class="btn-icon" title="Sinkron Google Drive">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+                    </button>
                     <button id="btn-settings" class="btn-icon" title="Pengaturan">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                     </button>
@@ -128,23 +146,19 @@
 
             <!-- Spreadsheet Tab -->
             <section id="spreadsheet-tab" class="tab-content">
-                <div class="spreadsheet-container" style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
-                        <thead style="background: #008A4B;">
+                <div class="spreadsheet-container">
+                    <table class="spreadsheet-table">
+                        <thead>
                             <tr>
-                                <th style="padding: 12px 16px; text-align: left; color: white; font-weight: 600;">No</th>
-                                <th style="padding: 12px 16px; text-align: left; color: white; font-weight: 600;">Tanggal</th>
-                                <th style="padding: 12px 16px; text-align: left; color: white; font-weight: 600;">Keterangan</th>
-                                <th style="padding: 12px 16px; text-align: left; color: white; font-weight: 600;">Tipe</th>
-                                <th style="padding: 12px 16px; text-align: right; color: white; font-weight: 600;">Jumlah</th>
+                                <th class="spreadsheet-th">No</th>
+                                <th class="spreadsheet-th">Tanggal</th>
+                                <th class="spreadsheet-th">Keterangan</th>
+                                <th class="spreadsheet-th">Tipe</th>
+                                <th class="spreadsheet-th">Jumlah</th>
                             </tr>
                         </thead>
-                        <tbody id="spreadsheet-body">
-                        </tbody>
-                        <tfoot style="background: #f3f4f6; font-weight: 600;">
-                            <tr id="spreadsheet-summary">
-                            </tr>
-                        </tfoot>
+                        <tbody id="spreadsheet-body"></tbody>
+                        <tfoot id="spreadsheet-summary"></tfoot>
                     </table>
                 </div>
             </section>
@@ -222,6 +236,10 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
                         Sinkron Google Drive
                     </button>
+                    <button id="btn-sign-out" class="report-btn json" style="width: 100%; margin-bottom: 12px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        Keluar Akun
+                    </button>
                     <p class="help-text">Data Anda akan disimpan ke Google Drive untuk akses di perangkat lain.</p>
                 </div>
                 <div class="settings-section">
@@ -233,22 +251,23 @@
                             <li>Buat project baru</li>
                             <li>Aktifkan Google Drive API</li>
                             <li>Buat OAuth 2.0 Client ID</li>
-                            <li>Tambahkan origin URL ke Authorized JavaScript origins</li>
+                            <li>Tambahkan origin URL ke Authorized JavaScript origins: <code>https://swevaga.github.io</code></li>
                         </ol>
                     </div>
                     <div class="guide-box">
                         <h4>GitHub Setup:</h4>
                         <ol>
-                            <li>Push kode ke repository GitHub</li>
+                            <li>Push kode ke repository GitHub: <code>https://github.com/Swevaga/Kas-Digital</code></li>
                             <li>Aktifkan GitHub Pages di Settings</li>
                             <li>GitHub Actions akan otomatis deploy</li>
+                            <li>Data pengguna disimpan di repo (encrypted)</li>
                         </ol>
                     </div>
                 </div>
                 <div class="settings-section">
                     <h3>Tentang</h3>
                     <p>Kas Digital by Evaga (Rouf)</p>
-                    <p class="version-text">v0.3 Beta</p>
+                    <p class="version-text">v0.4</p>
                     <button id="btn-check-update" class="report-btn json" style="width: 100%;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                         Cek Update

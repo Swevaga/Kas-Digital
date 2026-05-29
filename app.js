@@ -1,13 +1,17 @@
 // ==============================
-// # GLOBAL VARIABLES
+// # KAS DIGITAL v0.4 - FULL FEATURES
 // ==============================
+
 let transactions = [];
 let currentTab = 'transactions';
 let userProfile = {
     name: '',
-    dob: ''
+    dob: '',
+    email: '',
+    picture: ''
 };
-const APP_VERSION = '0.3.0';
+const APP_VERSION = '0.4.0';
+const GITHUB_REPO = 'Swevaga/Kas-Digital';
 
 // ==============================
 // # INITIALIZATION
@@ -15,22 +19,20 @@ const APP_VERSION = '0.3.0';
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
     registerServiceWorker();
+    initGoogleAPI();
 });
 
 function initApp() {
-    loadTransactions();
     loadUserProfile();
+    loadTransactions();
     
-    // Check if we need to show onboarding
-    if (!userProfile.name) {
-        setTimeout(() => {
+    setTimeout(() => {
+        if (!userProfile.name) {
             showOnboarding();
-        }, 2000);
-    } else {
-        setTimeout(() => {
+        } else {
             showMainApp();
-        }, 2000);
-    }
+        }
+    }, 2000);
     
     renderTransactions();
     updateSummary();
@@ -39,16 +41,78 @@ function initApp() {
     checkForUpdates();
 }
 
-function showOnboarding() {
-    document.getElementById('splash-screen').style.display = 'none';
-    document.getElementById('onboarding-screen').style.display = 'flex';
+function initGoogleAPI() {
+    window.handleGoogleSignIn = handleGoogleSignIn;
 }
 
-function showMainApp() {
-    document.getElementById('splash-screen').style.display = 'none';
-    document.getElementById('onboarding-screen').style.display = 'none';
-    document.getElementById('main-app').style.display = 'flex';
-    updateProfileDisplay();
+// ==============================
+// # COOKIE MANAGEMENT - AUTO SAVE
+// ==============================
+function setCookie(name, value, days = 365) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+    const cookieValue = encodeURIComponent(JSON.stringify(value));
+    document.cookie = `${name}=${cookieValue};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+}
+
+function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i].trim();
+        if (c.indexOf(nameEQ) === 0) {
+            try {
+                return JSON.parse(decodeURIComponent(c.substring(nameEQ.length)));
+            } catch (e) {
+                return null;
+            }
+        }
+    }
+    return null;
+}
+
+function eraseCookie(name) {
+    document.cookie = `${name}=;Path=/;Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+}
+
+// ==============================
+// # GOOGLE SIGN-IN
+// ==============================
+function handleGoogleSignIn(response) {
+    try {
+        const credential = response.credential;
+        const data = parseJwt(credential);
+        
+        userProfile.email = data.email;
+        userProfile.name = data.name;
+        userProfile.picture = data.picture;
+        
+        saveUserProfile();
+        showMainApp();
+    } catch (error) {
+        console.error('Google Sign-In error:', error);
+    }
+}
+
+function parseJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+}
+
+function signOut() {
+    userProfile = {
+        name: '',
+        dob: '',
+        email: '',
+        picture: ''
+    };
+    saveUserProfile();
+    eraseCookie('userProfile');
+    window.location.reload();
 }
 
 // ==============================
@@ -66,26 +130,38 @@ function registerServiceWorker() {
 // # USER PROFILE
 // ==============================
 function loadUserProfile() {
-    const saved = localStorage.getItem('kas-digital-profile');
-    if (saved) {
-        userProfile = JSON.parse(saved);
+    const savedLocal = localStorage.getItem('kas-digital-profile');
+    const savedCookie = getCookie('userProfile');
+    
+    if (savedLocal) {
+        userProfile = JSON.parse(savedLocal);
+    } else if (savedCookie) {
+        userProfile = savedCookie;
     }
 }
 
 function saveUserProfile() {
     localStorage.setItem('kas-digital-profile', JSON.stringify(userProfile));
+    setCookie('userProfile', userProfile);
+    updateProfileDisplay();
 }
 
 function updateProfileDisplay() {
-    document.getElementById('profile-name').textContent = userProfile.name || 'User';
-    const avatar = document.getElementById('profile-avatar');
-    if (userProfile.name) {
-        avatar.textContent = userProfile.name.charAt(0).toUpperCase();
-    }
+    const nameEl = document.getElementById('profile-name');
+    const avatarEl = document.getElementById('profile-avatar');
+    const avatarImgEl = document.getElementById('profile-avatar-img');
     
-    // Also update settings form
-    document.getElementById('settings-name').value = userProfile.name || '';
-    document.getElementById('settings-dob').value = userProfile.dob || '';
+    if (nameEl) nameEl.textContent = userProfile.name || 'User';
+    
+    if (userProfile.picture && avatarImgEl) {
+        avatarImgEl.src = userProfile.picture;
+        avatarImgEl.style.display = 'block';
+        if (avatarEl) avatarEl.style.display = 'none';
+    } else if (avatarEl) {
+        avatarEl.style.display = 'flex';
+        if (avatarImgEl) avatarImgEl.style.display = 'none';
+        avatarEl.textContent = userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U';
+    }
 }
 
 // ==============================
@@ -93,13 +169,16 @@ function updateProfileDisplay() {
 // ==============================
 function setupEventListeners() {
     // Onboarding form
-    document.getElementById('onboarding-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        userProfile.name = document.getElementById('onboarding-name').value;
-        userProfile.dob = document.getElementById('onboarding-dob').value;
-        saveUserProfile();
-        showMainApp();
-    });
+    const onboardingForm = document.getElementById('onboarding-form');
+    if (onboardingForm) {
+        onboardingForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            userProfile.name = document.getElementById('onboarding-name').value;
+            userProfile.dob = document.getElementById('onboarding-dob').value;
+            saveUserProfile();
+            showMainApp();
+        });
+    }
     
     // Bottom nav items
     document.querySelectorAll('.nav-item').forEach(btn => {
@@ -109,37 +188,63 @@ function setupEventListeners() {
     });
     
     // Quick actions
-    document.getElementById('btn-add-income').addEventListener('click', () => openModal('income'));
-    document.getElementById('btn-add-expense').addEventListener('click', () => openModal('expense'));
+    const btnAddIncome = document.getElementById('btn-add-income');
+    const btnAddExpense = document.getElementById('btn-add-expense');
+    if (btnAddIncome) btnAddIncome.addEventListener('click', () => openModal('income'));
+    if (btnAddExpense) btnAddExpense.addEventListener('click', () => openModal('expense'));
     
     // Modal - add transaction
-    document.getElementById('btn-close-modal').addEventListener('click', closeModal);
-    document.getElementById('modal-add').addEventListener('click', (e) => {
-        if (e.target.id === 'modal-add') closeModal();
-    });
-    document.getElementById('transaction-form').addEventListener('submit', handleAddTransaction);
+    const btnCloseModal = document.getElementById('btn-close-modal');
+    const modalAdd = document.getElementById('modal-add');
+    const transactionForm = document.getElementById('transaction-form');
+    
+    if (btnCloseModal) btnCloseModal.addEventListener('click', closeModal);
+    if (modalAdd) {
+        modalAdd.addEventListener('click', (e) => {
+            if (e.target.id === 'modal-add') closeModal();
+        });
+    }
+    if (transactionForm) transactionForm.addEventListener('submit', handleAddTransaction);
     
     // Settings modal
-    document.getElementById('btn-settings').addEventListener('click', openSettingsModal);
-    document.getElementById('btn-close-settings').addEventListener('click', closeSettingsModal);
-    document.getElementById('settings-modal').addEventListener('click', (e) => {
-        if (e.target.id === 'settings-modal') closeSettingsModal();
-    });
-    document.getElementById('btn-save-profile').addEventListener('click', saveProfileFromSettings);
-    document.getElementById('btn-check-update').addEventListener('click', checkForUpdates);
-    document.getElementById('btn-drive-sync-settings').addEventListener('click', syncToDrive);
+    const btnSettings = document.getElementById('btn-settings');
+    const btnCloseSettings = document.getElementById('btn-close-settings');
+    const settingsModal = document.getElementById('settings-modal');
+    const btnSaveProfile = document.getElementById('btn-save-profile');
+    const btnSignOut = document.getElementById('btn-sign-out');
+    const btnCheckUpdate = document.getElementById('btn-check-update');
+    
+    if (btnSettings) btnSettings.addEventListener('click', openSettingsModal);
+    if (btnCloseSettings) btnCloseSettings.addEventListener('click', closeSettingsModal);
+    if (settingsModal) {
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target.id === 'settings-modal') closeSettingsModal();
+        });
+    }
+    if (btnSaveProfile) btnSaveProfile.addEventListener('click', saveProfileFromSettings);
+    if (btnSignOut) btnSignOut.addEventListener('click', signOut);
+    if (btnCheckUpdate) btnCheckUpdate.addEventListener('click', () => checkForUpdates(true));
     
     // Report buttons
-    document.getElementById('btn-export-pdf').addEventListener('click', exportToPDF);
-    document.getElementById('btn-export-excel').addEventListener('click', exportToExcel);
-    document.getElementById('btn-export-json').addEventListener('click', exportToJSON);
-    document.getElementById('import-json').addEventListener('change', importFromJSON);
-    document.getElementById('btn-drive-sync').addEventListener('click', syncToDrive);
+    const btnExportPdf = document.getElementById('btn-export-pdf');
+    const btnExportExcel = document.getElementById('btn-export-excel');
+    const btnExportJson = document.getElementById('btn-export-json');
+    const importJson = document.getElementById('import-json');
+    const btnDriveSync = document.getElementById('btn-drive-sync');
+    const btnDriveSyncSettings = document.getElementById('btn-drive-sync-settings');
+    const btnSyncDrive = document.getElementById('btn-sync-drive');
+    
+    if (btnExportPdf) btnExportPdf.addEventListener('click', exportToPDF);
+    if (btnExportExcel) btnExportExcel.addEventListener('click', exportToExcel);
+    if (btnExportJson) btnExportJson.addEventListener('click', exportToJSON);
+    if (importJson) importJson.addEventListener('change', importFromJSON);
+    if (btnDriveSync) btnDriveSync.addEventListener('click', syncToDrive);
+    if (btnDriveSyncSettings) btnDriveSyncSettings.addEventListener('click', syncToDrive);
+    if (btnSyncDrive) btnSyncDrive.addEventListener('click', syncToDrive);
     
     // Update notification
-    document.getElementById('update-btn').addEventListener('click', () => {
-        window.location.reload();
-    });
+    const updateBtn = document.getElementById('update-btn');
+    if (updateBtn) updateBtn.addEventListener('click', () => window.location.reload());
 }
 
 // ==============================
@@ -148,7 +253,6 @@ function setupEventListeners() {
 function handleTabChangeBottomNav(tab) {
     currentTab = tab;
     
-    // Update bottom nav
     document.querySelectorAll('.nav-item').forEach(btn => {
         btn.classList.remove('active');
         if (btn.dataset.tab === tab) {
@@ -156,58 +260,81 @@ function handleTabChangeBottomNav(tab) {
         }
     });
     
-    // Update content
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
     });
-    document.getElementById(`${tab}-tab`).classList.add('active');
+    const tabContent = document.getElementById(`${tab}-tab`);
+    if (tabContent) tabContent.classList.add('active');
 }
 
 // ==============================
 // # MODAL FUNCTIONS
 // ==============================
+function showOnboarding() {
+    const splashScreen = document.getElementById('splash-screen');
+    const onboardingScreen = document.getElementById('onboarding-screen');
+    if (splashScreen) splashScreen.style.display = 'none';
+    if (onboardingScreen) onboardingScreen.style.display = 'flex';
+}
+
+function showMainApp() {
+    const splashScreen = document.getElementById('splash-screen');
+    const onboardingScreen = document.getElementById('onboarding-screen');
+    const mainApp = document.getElementById('main-app');
+    
+    if (splashScreen) splashScreen.style.display = 'none';
+    if (onboardingScreen) onboardingScreen.style.display = 'none';
+    if (mainApp) mainApp.style.display = 'flex';
+    updateProfileDisplay();
+}
+
 function openModal(type) {
     const modal = document.getElementById('modal-add');
     const title = document.getElementById('modal-title');
     const radioIncome = document.getElementById('type-income');
     const radioExpense = document.getElementById('type-expense');
     
-    title.textContent = type === 'income' ? 'Tambah Pemasukan' : 'Tambah Pengeluaran';
+    if (title) title.textContent = type === 'income' ? 'Tambah Pemasukan' : 'Tambah Pengeluaran';
     
-    if (type === 'income') {
-        radioIncome.checked = true;
-    } else {
-        radioExpense.checked = true;
-    }
+    if (type === 'income' && radioIncome) radioIncome.checked = true;
+    else if (radioExpense) radioExpense.checked = true;
     
-    modal.style.display = 'flex';
-    document.getElementById('description').focus();
+    if (modal) modal.style.display = 'flex';
+    const descInput = document.getElementById('description');
+    if (descInput) descInput.focus();
 }
 
 function closeModal() {
     const modal = document.getElementById('modal-add');
-    modal.style.display = 'none';
-    document.getElementById('transaction-form').reset();
+    if (modal) modal.style.display = 'none';
+    const form = document.getElementById('transaction-form');
+    if (form) form.reset();
     setCurrentDate();
 }
 
 function openSettingsModal() {
     const modal = document.getElementById('settings-modal');
-    document.getElementById('settings-name').value = userProfile.name || '';
-    document.getElementById('settings-dob').value = userProfile.dob || '';
-    modal.style.display = 'flex';
+    const settingsName = document.getElementById('settings-name');
+    const settingsDob = document.getElementById('settings-dob');
+    
+    if (settingsName) settingsName.value = userProfile.name || '';
+    if (settingsDob) settingsDob.value = userProfile.dob || '';
+    
+    if (modal) modal.style.display = 'flex';
 }
 
 function closeSettingsModal() {
     const modal = document.getElementById('settings-modal');
-    modal.style.display = 'none';
+    if (modal) modal.style.display = 'none';
 }
 
 function saveProfileFromSettings() {
-    userProfile.name = document.getElementById('settings-name').value;
-    userProfile.dob = document.getElementById('settings-dob').value;
+    const settingsName = document.getElementById('settings-name');
+    const settingsDob = document.getElementById('settings-dob');
+    
+    if (settingsName) userProfile.name = settingsName.value;
+    if (settingsDob) userProfile.dob = settingsDob.value;
     saveUserProfile();
-    updateProfileDisplay();
     closeSettingsModal();
 }
 
@@ -215,12 +342,19 @@ function saveProfileFromSettings() {
 // # TRANSACTIONS MANAGEMENT
 // ==============================
 function loadTransactions() {
-    const saved = localStorage.getItem('kas-digital-transactions');
-    transactions = saved ? JSON.parse(saved) : [];
+    const savedLocal = localStorage.getItem('kas-digital-transactions');
+    const savedCookie = getCookie('transactions');
+    
+    if (savedLocal) {
+        transactions = JSON.parse(savedLocal);
+    } else if (savedCookie) {
+        transactions = savedCookie;
+    }
 }
 
 function saveTransactions() {
     localStorage.setItem('kas-digital-transactions', JSON.stringify(transactions));
+    setCookie('transactions', transactions);
 }
 
 function handleAddTransaction(e) {
@@ -251,7 +385,8 @@ function deleteTransaction(id) {
 }
 
 function setCurrentDate() {
-    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('date');
+    if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
 }
 
 // ==============================
@@ -261,11 +396,13 @@ function renderTransactions() {
     const container = document.getElementById('transaction-list');
     const emptyState = document.getElementById('empty-state');
     
+    if (!container) return;
+    
     if (transactions.length === 0) {
         container.innerHTML = '';
-        emptyState.style.display = 'block';
+        if (emptyState) emptyState.style.display = 'block';
     } else {
-        emptyState.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'none';
         container.innerHTML = transactions.map(t => `
             <div class="transaction-item" ondblclick="deleteTransaction(${t.id})">
                 <div class="transaction-info">
@@ -286,21 +423,23 @@ function renderSpreadsheet() {
     const tbody = document.getElementById('spreadsheet-body');
     const tfoot = document.getElementById('spreadsheet-summary');
     
+    if (!tbody || !tfoot) return;
+    
     if (transactions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="padding: 40px; text-align: center; color: #6b7280;">Belum ada transaksi</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="padding: 40px; text-align: center; color: #6B7280;">Belum ada transaksi</td></tr>';
         tfoot.innerHTML = '';
         return;
     }
     
     tbody.innerHTML = transactions.map((t, i) => `
-        <tr style="border-bottom: 1px solid #e5e7eb;">
-            <td style="padding: 12px 16px;">${i + 1}</td>
-            <td style="padding: 12px 16px;">${t.date}</td>
-            <td style="padding: 12px 16px;">${escapeHtml(t.description)}</td>
-            <td style="padding: 12px 16px; color: ${t.type === 'income' ? '#10b981' : '#ef4444'};">
+        <tr style="border-bottom: 1px solid #E5E7EB;">
+            <td style="padding: 14px 16px;">${i + 1}</td>
+            <td style="padding: 14px 16px;">${t.date}</td>
+            <td style="padding: 14px 16px;">${escapeHtml(t.description)}</td>
+            <td style="padding: 14px 16px; color: ${t.type === 'income' ? '#10B981' : '#EF4444'};">
                 ${t.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
             </td>
-            <td style="padding: 12px 16px; text-align: right; color: ${t.type === 'income' ? '#10b981' : '#ef4444'};">
+            <td style="padding: 14px 16px; text-align: right; color: ${t.type === 'income' ? '#10B981' : '#EF4444'};">
                 ${formatCurrency(t.amount)}
             </td>
         </tr>
@@ -312,18 +451,18 @@ function renderSpreadsheet() {
     
     tfoot.innerHTML = `
         <tr>
-            <td colspan="3" style="padding: 12px 16px;">Total Pemasukan</td>
-            <td style="padding: 12px 16px; color: #10b981;">${formatCurrency(income)}</td>
+            <td colspan="3" style="padding: 14px 16px;">Total Pemasukan</td>
+            <td style="padding: 14px 16px; color: #10B981;">${formatCurrency(income)}</td>
             <td></td>
         </tr>
-        <tr style="background: #e5e7eb;">
-            <td colspan="3" style="padding: 12px 16px;">Total Pengeluaran</td>
-            <td style="padding: 12px 16px; color: #ef4444;">${formatCurrency(expense)}</td>
+        <tr style="background: #E5E7EB;">
+            <td colspan="3" style="padding: 14px 16px;">Total Pengeluaran</td>
+            <td style="padding: 14px 16px; color: #EF4444;">${formatCurrency(expense)}</td>
             <td></td>
         </tr>
         <tr>
-            <td colspan="3" style="padding: 12px 16px;">Saldo Akhir</td>
-            <td style="padding: 12px 16px; color: #008a4b;">${formatCurrency(balance)}</td>
+            <td colspan="3" style="padding: 14px 16px;">Saldo Akhir</td>
+            <td style="padding: 14px 16px; color: #008A4B;">${formatCurrency(balance)}</td>
             <td></td>
         </tr>
     `;
@@ -334,9 +473,13 @@ function updateSummary() {
     const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
     const balance = income - expense;
     
-    document.getElementById('balance').textContent = formatCurrency(balance);
-    document.getElementById('total-income').textContent = formatCurrency(income);
-    document.getElementById('total-expense').textContent = formatCurrency(expense);
+    const balanceEl = document.getElementById('balance');
+    const totalIncomeEl = document.getElementById('total-income');
+    const totalExpenseEl = document.getElementById('total-expense');
+    
+    if (balanceEl) balanceEl.textContent = formatCurrency(balance);
+    if (totalIncomeEl) totalIncomeEl.textContent = formatCurrency(income);
+    if (totalExpenseEl) totalExpenseEl.textContent = formatCurrency(expense);
 }
 
 // ==============================
@@ -355,6 +498,51 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// ==============================
+// # UPDATE CHECK & GITHUB RELEASES
+// ==============================
+async function checkForUpdates(manual = false) {
+    try {
+        const lastCheck = localStorage.getItem('kas-digital-last-check');
+        const now = Date.now();
+        
+        if (!manual && lastCheck && (now - parseInt(lastCheck) < 3600000)) {
+            return;
+        }
+        
+        localStorage.setItem('kas-digital-last-check', now.toString());
+        
+        const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`);
+        
+        if (!response.ok) {
+            if (manual) alert('Tidak dapat memeriksa pembaruan');
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.tag_name && data.tag_name !== `v${APP_VERSION}`) {
+            showUpdateNotification(data);
+        } else if (manual) {
+            alert('Anda sudah menggunakan versi terbaru!');
+        }
+    } catch (error) {
+        console.error('Update check error:', error);
+        if (manual) alert('Gagal memeriksa pembaruan');
+    }
+}
+
+function showUpdateNotification(releaseData) {
+    const notification = document.getElementById('update-notification');
+    const updateText = document.querySelector('.update-text');
+    
+    if (updateText && releaseData) {
+        updateText.textContent = `🎊 ${releaseData.name || 'Pembaruan baru tersedia'} - Klik untuk memperbarui`;
+    }
+    
+    if (notification) notification.style.display = 'flex';
 }
 
 // ==============================
@@ -413,18 +601,9 @@ function exportToExcel() {
     const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
     const balance = income - expense;
     
-    const summaryData = [
-        { 'Keterangan': 'Total Pemasukan', 'Jumlah': income },
-        { 'Keterangan': 'Total Pengeluaran', 'Jumlah': expense },
-        { 'Keterangan': 'Saldo Akhir', 'Jumlah': balance }
-    ];
-    
     const wb = XLSX.utils.book_new();
     const ws1 = XLSX.utils.json_to_sheet(data);
-    const ws2 = XLSX.utils.json_to_sheet(summaryData);
-    
     XLSX.utils.book_append_sheet(wb, ws1, 'Transaksi');
-    XLSX.utils.book_append_sheet(wb, ws2, 'Ringkasan');
     
     XLSX.writeFile(wb, `laporan-kas-digital-${new Date().toISOString().split('T')[0]}.xlsx`);
 }
@@ -438,7 +617,6 @@ function exportToPDF() {
     const { jsPDF } = jspdf;
     const doc = new jsPDF();
     
-    // Header
     doc.setFillColor(0, 138, 75);
     doc.rect(0, 0, 210, 40, 'F');
     doc.setTextColor(255, 255, 255);
@@ -446,38 +624,15 @@ function exportToPDF() {
     doc.setFont('helvetica', 'bold');
     doc.text('LAPORAN KAS DIGITAL', 105, 25, { align: 'center' });
     
-    // Subtitle
     doc.setTextColor(107, 114, 128);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Dicetak pada: ${new Date().toLocaleDateString('id-ID')}`, 105, 50, { align: 'center' });
     
-    // Summary Box
-    doc.setFillColor(243, 244, 246);
-    doc.roundedRect(20, 60, 170, 40, 3, 3, 'F');
-    
     const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
     const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
     const balance = income - expense;
     
-    doc.setTextColor(17, 24, 39);
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Total Pemasukan', 30, 75);
-    doc.setTextColor(16, 185, 129);
-    doc.text(formatCurrency(income), 190, 75, { align: 'right' });
-    
-    doc.setTextColor(17, 24, 39);
-    doc.text('Total Pengeluaran', 30, 88);
-    doc.setTextColor(239, 68, 68);
-    doc.text(formatCurrency(expense), 190, 88, { align: 'right' });
-    
-    doc.setTextColor(17, 24, 39);
-    doc.text('Saldo Akhir', 30, 101);
-    doc.setTextColor(0, 138, 75);
-    doc.text(formatCurrency(balance), 190, 101, { align: 'right' });
-    
-    // Table Header
     let y = 115;
     doc.setTextColor(255, 255, 255);
     doc.setFillColor(0, 138, 75);
@@ -490,8 +645,6 @@ function exportToPDF() {
     doc.text('Jumlah', 190, y + 7, { align: 'right' });
     
     y += 15;
-    
-    // Table Content
     doc.setTextColor(17, 24, 39);
     doc.setFont('helvetica', 'normal');
     
@@ -501,7 +654,6 @@ function exportToPDF() {
             y = 20;
         }
         
-        // Alternating row color
         if (i % 2 === 0) {
             doc.setFillColor(248, 250, 252);
             doc.rect(20, y - 5, 170, 8, 'F');
@@ -517,7 +669,6 @@ function exportToPDF() {
         y += 8;
     });
     
-    // Footer
     doc.setTextColor(156, 163, 175);
     doc.setFontSize(9);
     doc.text('Kas Digital by Evaga (Rouf)', 105, 290, { align: 'center' });
@@ -526,27 +677,8 @@ function exportToPDF() {
 }
 
 // ==============================
-// # UPDATE & SYNC
+// # GOOGLE DRIVE SYNC
 // ==============================
-function checkForUpdates() {
-    // Simulate checking for updates
-    const lastUpdateCheck = localStorage.getItem('kas-digital-last-update-check');
-    const now = Date.now();
-    
-    if (!lastUpdateCheck || (now - lastUpdateCheck > 86400000)) {
-        localStorage.setItem('kas-digital-last-update-check', String(now));
-        // In a real app, you'd check a server here
-    }
-}
-
-function showUpdateNotification() {
-    document.getElementById('update-notification').style.display = 'flex';
-}
-
 function syncToDrive() {
-    alert('Untuk menyinkronkan dengan Google Drive:\n\n1. Buka Google Cloud Console\n2. Buat project baru\n3. Aktifkan Google Drive API\n4. Buat OAuth 2.0 Client ID\n5. Tambahkan origin ke Authorized JavaScript origins\n\nData Anda disimpan secara lokal. Gunakan Export JSON untuk mencadangkan!');
-}
-
-function syncToGitHub() {
-    alert('Konfigurasi GitHub sudah diatur di GitHub Actions! Push kode Anda untuk deployment otomatis!');
+    alert('Sinkronisasi Google Drive dalam pengembangan.\n\nUntuk saat ini, gunakan Export JSON untuk mencadangkan data Anda!');
 }

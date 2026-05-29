@@ -1,22 +1,25 @@
 {
-    "name": "Kas Digital by Evaga (Rouf)",
-    "short_name": "Kas Digital",
-    "description": "Aplikasi pencatat keuangan digital dengan tampilan seperti e-wallet",
-    "start_url": ".",
-    "display": "standalone",
-    "background_color": "#008A4B",
-    "theme_color": "#008A4B",
-    "version": "0.3.0",
-    "icons": [
-        {
-            "src": "https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=money%20coin%20inside%20circle%20logo%20green%20color%20minimal%20flat%20design%20simple&image_size=square",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=money%20coin%20inside%20circle%20logo%20green%20color%20minimal%20flat%20design%20simple&image_size=square_hd",
-            "sizes": "512x512",
-            "type": "image/png"
-        }
-    ]
+  "name": "Kas Digital by Evaga (Rouf)",
+  "short_name": "Kas Digital",
+  "description": "Aplikasi pencatat keuangan digital dengan tampilan seperti e-wallet",
+  "version": "0.4.0",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0078D4",
+  "theme_color": "#008A4B",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=money%20coin%20inside%20circle%20logo%20green%20color%20minimal%20flat%20design%20simple&image_size=square",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=money%20coin%20inside%20circle%20logo%20green%20color%20minimal%20flat%20design%20simple&image_size=square_hd",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
